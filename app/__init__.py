@@ -1,4 +1,5 @@
 ﻿import os
+import secrets
 import sqlite3
 from functools import wraps
 from pathlib import Path
@@ -193,9 +194,7 @@ class MajiCareClient(FlaskClient):
 def create_app():
     app = Flask(__name__, template_folder="templates")
     app.test_client_class = MajiCareClient
-    app.config["SECRET_KEY"] = os.environ.get(
-        "SECRET_KEY", "replace-this-with-a-secure-random-secret"
-    )
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
     app.config["DATABASE"] = str(DATABASE)
     app.init_db = init_db
     app.get_db = get_db

@@ -57,6 +57,22 @@ def test_register_and_login_flow(client):
     assert response.headers["Location"].endswith("/dashboard")
 
 
+def test_create_app_uses_configured_secret(monkeypatch):
+    monkeypatch.setenv("SECRET_KEY", "configured-test-secret")
+
+    assert create_app().config["SECRET_KEY"] == "configured-test-secret"
+
+
+def test_create_app_generates_random_secret_when_unset(monkeypatch):
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+
+    first_app = create_app()
+    second_app = create_app()
+
+    assert len(first_app.config["SECRET_KEY"]) == 64
+    assert first_app.config["SECRET_KEY"] != second_app.config["SECRET_KEY"]
+
+
 def test_admin_route_requires_login_and_admin(client):
     response = client.get("/admin", follow_redirects=False)
     assert response.status_code == 302
