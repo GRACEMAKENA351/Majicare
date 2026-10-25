@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}My Dashboard | MajiCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-heading">
+        <div>
+            <span class="eyebrow">MY REPORTS</span>
+            <h2>Resident Dashboard</h2>
+            <p>Track the status of your submitted water issues.</p>
+        </div>
+        <a class="btn btn-outline" href="{{ url_for('create_report') }}">Report a Problem +</a>
+    </div>
+
+    {% if reports %}
+        <div class="water-grid">
+            {% for report in reports %}
+                <article class="water-card">
+                    <span class="status-badge status-{{ report.status|lower|replace(' ', '-') }}">{{ report.status }}</span>
+                    <h3>{{ report.title }}</h3>
+                    <p><strong>Category:</strong> {{ report.category }}</p>
+                    <p><strong>Location:</strong> {{ report.location }}</p>
+                    <p>{{ report.description }}</p>
+                    <p><small>Submitted {{ report.created_at }}</small></p>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="form-card">
+            <p>You have not submitted any reports yet.</p>
+            <a class="btn btn-primary" href="{{ url_for('create_report') }}">Create your first report</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

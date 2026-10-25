@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Water Points | MajiCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-heading">
+        <div>
+            <span class="eyebrow">WATER POINTS</span>
+            <h2>Water Points</h2>
+            <p>Review the infrastructure tracked by the MajiCare platform.</p>
+        </div>
+        {% if session.get('user_id') %}
+            <a class="btn btn-outline" href="{{ url_for('create_report') }}">Report a Problem +</a>
+        {% endif %}
+    </div>
+
+    <div class="water-grid">
+        {% for point in water_points %}
+            <article class="water-card">
+                <div class="water-card-icon">🚰</div>
+                <span class="status-badge status-{{ point.status|lower|replace(' ', '-') }}">{{ point.status }}</span>
+                <h3>{{ point.name }}</h3>
+                <p>📍 {{ point.location }}</p>
+                <p>Water source: {{ point.water_type }}</p>
+            </article>
+        {% else %}
+            <div class="form-card">
+                <p>No water points have been added yet.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

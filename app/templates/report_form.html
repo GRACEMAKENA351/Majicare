@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Report an Issue | MajiCare{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="form-card">
+        <div class="form-icon">🚰</div>
+        <span class="eyebrow">REPORT WATER ISSUE</span>
+        <h1>Submit a Report</h1>
+        <p>Tell us what is happening so the right people can respond.</p>
+
+        <form method="POST" action="{{ url_for('create_report') }}">
+            <label for="title">Issue title</label>
+            <input id="title" name="title" type="text" required placeholder="e.g. Broken tap near the clinic">
+
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+                <option value="">Select a category</option>
+                <option value="Water Shortage">Water Shortage</option>
+                <option value="Broken Tap">Broken Tap</option>
+                <option value="Broken Borehole">Broken Borehole</option>
+                <option value="Water Quality">Water Quality</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <label for="location">Location</label>
+            <input id="location" name="location" type="text" required placeholder="Village, market, school, etc.">
+
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="5" required placeholder="Describe the problem and any urgent details..."></textarea>
+
+            <button class="btn btn-primary btn-full" type="submit">Submit Report</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Home | MajiCare{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <span class="eyebrow">SMART COMMUNITY WATER MANAGEMENT</span>
+        <h1>Every Drop Counts.<br><span>Every Community Matters.</span></h1>
+        <p>Help your community report water shortages, identify broken water points and follow the progress of reported problems.</p>
+        <div class="hero-actions">
+            {% if session.get('user_id') %}
+                <a class="btn btn-primary btn-large" href="{{ url_for('create_report') }}">Report a Water Problem</a>
+            {% else %}
+                <a class="btn btn-primary btn-large" href="{{ url_for('register') }}">Join MajiCare</a>
+                <a class="btn btn-light btn-large" href="{{ url_for('login') }}">Sign In</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="hero-visual">
+        <div class="water-icon">💧</div>
+        <div class="water-circle"></div>
+        <p>Better reporting.<br>Better water management.</p>
+    </div>
+</section>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <span class="stat-icon">📍</span>
+        <p class="stat-label">Listed Water Points</p>
+        <h2>{{ water_points|length }}</h2>
+    </article>
+    <article class="stat-card">
+        <span class="stat-icon">📋</span>
+        <p class="stat-label">Reports Submitted</p>
+        <h2>{{ total_reports }}</h2>
+    </article>
+    <article class="stat-card">
+        <span class="stat-icon">⏳</span>
+        <p class="stat-label">Pending Reports</p>
+        <h2>{{ pending_reports }}</h2>
+    </article>
+</section>
+
+<section class="section">
+    <div class="section-heading">
+        <div>
+            <span class="eyebrow">COMMUNITIES</span>
+            <h2>Featured Communities</h2>
+            <p>See the communities currently served by the MajiCare platform.</p>
+        </div>
+        <a class="btn btn-outline" href="{{ url_for('communities') }}">View All Communities</a>
+    </div>
+
+    <form method="get" action="{{ url_for('index') }}" class="filter-form">
+        <select name="county" id="county-filter" aria-label="Filter by county">
+            <option value="">All Counties</option>
+            {% for county in counties %}
+                <option value="{{ county.county }}" {% if county.county == selected_county %}selected{% endif %}>
+                    {{ county.county }}
+                </option>
+            {% endfor %}
+        </select>
+        <button class="btn btn-primary" type="submit">Filter</button>
+    </form>
+
+    <div class="community-grid">
+        {% for community in communities %}
+            <article class="community-card">
+                <div class="community-card-icon">🏘️</div>
+                <h3>{{ community.name }}</h3>
+                <p class="community-meta">{{ community.county }} · {{ community.region }}</p>
+                <p>{{ community.description }}</p>
+            </article>
+        {% else %}
+            <p>No communities have been added yet.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-heading">
+        <div>
+            <span class="eyebrow">COMMUNITY RESOURCES</span>
+            <h2>Water Point Directory</h2>
+            <p>Review the water points currently listed in the system.</p>
+        </div>
+        {% if session.get('user_id') %}
+            <a class="btn btn-outline" href="{{ url_for('create_report') }}">Report a Problem +</a>
+        {% endif %}
+    </div>
+
+    <div class="water-grid">
+        {% for point in water_points %}
+            <article class="water-card">
+                <div class="water-card-icon">🚰</div>
+                <span class="status-badge status-{{ point.status|lower|replace(' ', '-') }}">{{ point.status }}</span>
+                <h3>{{ point.name }}</h3>
+                <p>📍 {{ point.location }}</p>
+                <p>Water source: {{ point.water_type }}</p>
+            </article>
+        {% else %}
+            <p>No water points have been added yet.</p>
+        {% endfor %}
+    </div>
+
+    <p class="demo-note">Note: Entries labelled as demo locations are sample records, not verified community water points.</p>
+</section>
+
+<section class="callout">
+    <div>
+        <h2>Experiencing a water problem?</h2>
+        <p>Report shortages, broken taps, borehole failures or water-quality concerns.</p>
+    </div>
+    <a class="btn btn-light btn-large" href="{{ url_for('create_report') if session.get('user_id') else url_for('register') }}">Get Started</a>
+</section>
+{% endblock %}

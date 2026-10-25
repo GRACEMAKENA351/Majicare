@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="MajiCare - Communities">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Communities | MajiCare</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/static/icons/icon-192.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+            color: white;
+            padding: 32px 16px;
+            text-align: center;
+        }
+        .hero h1 { margin: 0 0 8px; font-size: 1.6rem; }
+        .hero p { margin: 0 0 16px; opacity: 0.9; }
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .filter-row input {
+            flex: 1;
+            min-width: 260px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.95rem;
+        }
+        .btn-primary-outline {
+            background: transparent;
+            color: #0f766e;
+            border: 1px solid #0f766e;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        .btn-primary-outline:hover { background: #0f766e; color: white; }
+        .community-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 10px;
+            background: #f8faf9;
+        }
+        .community-card .info { flex: 1; padding-right: 12px; }
+        .community-card .info h3 { margin: 0 0 4px; font-size: 1.05rem; color: #134e4a; }
+        .community-card .info p { margin: 0; font-size: 0.85rem; color: #475569; }
+        .community-card .meta {
+            text-align: right;
+            padding-left: 12px;
+        }
+        .community-card .meta .population { font-size: 1.1rem; font-weight: 700; color: #0f766e; }
+        .community-card .meta .region { font-size: 0.8rem; color: #64748b; }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1>🏘️ Communities</h1>
+            <p>Browse the communities in your county.</p>
+            <a class="btn btn-primary btn-full" href="/">Back to home</a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flashes">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="card">
+            <div class="filter-row">
+                <input type="text" id="county-filter" placeholder="Filter by county..." oninput="filterCommunities()">
+                <button class="btn-primary-outline" onclick="resetCommunities()">Reset</button>
+            </div>
+            <div id="communities">
+                {% for c in communities %}
+                    <div class="community-card" data-county="{{ c['county'] }}">
+                        <div class="info">
+                            <h3>{{ c['name'] }}</h3>
+                            <p>{{ c['description'] }}</p>
+                        </div>
+                        <div class="meta">
+                            <div class="population">{{ c['population'] }} people</div>
+                            <div class="region">{{ c['region'] }}</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No communities found.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const cards = document.querySelectorAll('.community-card');
+        const filter = document.getElementById('county-filter');
+
+        function filterCommunities() {
+            const term = filter.value.toLowerCase();
+            cards.forEach(card => {
+                card.style.display = card.dataset.county.toLowerCase().includes(term) ? '' : 'none';
+            });
+        }
+
+        function resetCommunities() {
+            filter.value = '';
+            cards.forEach(card => card.style.display = '');
+        }
+    </script>
+</body>
+</html>

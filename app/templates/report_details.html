@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Report Details | MajiCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-heading">
+        <div>
+            <span class="eyebrow">REPORT DETAILS</span>
+            <h2>{{ report.title }}</h2>
+            <p>Submitted by {{ report.username or 'Unknown user' }}</p>
+        </div>
+        <a class="btn btn-outline" href="{{ url_for('my_reports') }}">Back to My Reports</a>
+    </div>
+
+    <div class="form-card" style="width: min(760px, 100%);">
+        <p><strong>Status:</strong> <span class="status-badge status-{{ report.status|lower|replace(' ', '-') }}">{{ report.status }}</span></p>
+        <p><strong>Category:</strong> {{ report.category }}</p>
+        <p><strong>Location:</strong> {{ report.location }}</p>
+        <p><strong>Submitted:</strong> {{ report.created_at }}</p>
+        <div>
+            <h3>Description</h3>
+            <p>{{ report.description }}</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

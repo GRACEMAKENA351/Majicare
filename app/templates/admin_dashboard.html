@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | MajiCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-heading">
+        <div>
+            <span class="eyebrow">ADMIN PANEL</span>
+            <h2>System Overview</h2>
+            <p>Review reports, monitor status and manage community water issues.</p>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <article class="stat-card">
+            <span class="stat-icon">📊</span>
+            <p class="stat-label">Total reports</p>
+            <h2>{{ summary.total }}</h2>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon">⏳</span>
+            <p class="stat-label">Pending</p>
+            <h2>{{ summary.pending }}</h2>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon">✅</span>
+            <p class="stat-label">Resolved</p>
+            <h2>{{ summary.resolved }}</h2>
+        </article>
+    </div>
+
+    <form method="get" action="{{ url_for('admin_dashboard') }}" class="filter-form" style="margin-top: 20px;">
+        <label for="admin-status-filter" class="sr-only">Filter reports by status</label>
+        <select id="admin-status-filter" name="status" aria-label="Filter admin reports by status" onchange="this.form.submit()">
+            {% for status_option in allowed_statuses %}
+                <option value="{{ status_option }}" {% if status_option == selected_status %}selected{% endif %}>{{ status_option }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <div class="dashboard-card" style="padding: 25px; margin-top: 20px;">
+        <h3>Latest reports</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+            <thead>
+                <tr style="text-align: left; border-bottom: 1px solid #e0eaf0;">
+                    <th style="padding: 10px;">Title</th>
+                    <th style="padding: 10px;">Submitted By</th>
+                    <th style="padding: 10px;">Location</th>
+                    <th style="padding: 10px;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                    <tr style="border-bottom: 1px solid #e0eaf0;">
+                        <td style="padding: 10px;">{{ report.title }}</td>
+                        <td style="padding: 10px;">{{ report.username or 'Unknown' }}</td>
+                        <td style="padding: 10px;">{{ report.location }}</td>
+                        <td style="padding: 10px;">
+                            <form method="POST" action="{{ url_for('update_report_status', report_id=report.id) }}">
+                                <select name="status" onchange="this.form.submit()">
+                                    <option value="Pending" {% if report.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                    <option value="In Progress" {% if report.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="Resolved" {% if report.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="padding: 12px;">No reports found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

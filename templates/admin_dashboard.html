@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="MajiCare - Admin Dashboard">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Admin Dashboard | MajiCare</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/static/icons/icon-192.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #7c2d12 0%, #c2410c 100%);
+            color: white;
+            padding: 32px 16px;
+            text-align: center;
+        }
+        .hero h1 { margin: 0 0 8px; font-size: 1.6rem; }
+        .hero p { margin: 0 0 16px; opacity: 0.9; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            padding: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.16);
+            border-radius: 12px;
+            padding: 14px;
+        }
+        .stat-card .num { font-size: 1.6rem; font-weight: 700; }
+        .stat-card .label { font-size: 0.8rem; opacity: 0.85; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            padding: 18px;
+            margin-top: 16px;
+        }
+        .card h2 { margin: 0 0 12px; color: #7c2d12; font-size: 1.1rem; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e2e8f0; }
+        th { color: #7c2d12; font-weight: 700; }
+        .status-pending { color: #92400e; font-weight: 700; }
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Location</th>
+                            <th>Reported by</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reports %}
+                            <tr>
+                                <td>{{ r['title'] }}</td>
+                                <td>{{ r['category'] }}</td>
+                                <td>{{ r['location'] }}</td>
+                                <td>{{ r['username'] or '—' }}</td>
+                                <td><span class="status-{{ r['status']|lower }}">{{ r['status'] }}</span></td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('update_report_status', report_id=r['id']) }}" style="display:inline">
+                                        <input type="hidden" name="status" value="Resolved">
+                                        <button class="btn btn-resolve" type="submit">Resolve</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr class="empty-state">
+                                <td colspan="6">No reports yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
+
+        .status-in-progress { color: #1e40af; font-weight: 700; }
+        .status-resolved { color: #065f46; font-weight: 700; }
+        .btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-update { background: #0f766e; color: white; }
+        .btn-update:hover { background: #115e59; }
+        .btn-resolve { background: #065f46; color: white; }
+        .btn-resolve:hover { background: #084238; }
+        .empty-state { text-align: center; padding: 30px; color: #64748b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1>🛡️ Admin Dashboard</h1>
+            <p>Manage community water quality reports.</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flashes">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="card">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="num">{{ summary.total }}</div>
+                    <div class="label">Total reports</div>
+                </div>
+                <div class="stat-card">
+                    <div class="num" style="color:#fde68a">{{ summary.pending }}</div>
+                    <div class="label">Pending</div>
+                </div>
+                <div class="stat-card">
+                    <div class="num" style="color:#86efac">{{ summary.resolved }}</div>
+                    <div class="label">Resolved</div>
+                </div>
+                <div class="stat-card">
+                    <div class="num">{{ summary.water_points }}</div>
+                    <div class="label">Water points</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Reports</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Location</th>
+                            <th>Reported by</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>

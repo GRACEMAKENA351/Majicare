@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Communities | MajiCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-heading">
+        <div>
+            <span class="eyebrow">COMMUNITIES</span>
+            <h2>Communities Served</h2>
+            <p>Explore the communities currently participating in MajiCare reporting and monitoring.</p>
+        </div>
+        <a class="btn btn-outline" href="{{ url_for('index') }}">Back to Home</a>
+    </div>
+
+    <form method="get" action="{{ url_for('communities') }}" class="filter-form">
+        <select name="county" id="county-filter" aria-label="Filter by county">
+            <option value="">All Counties</option>
+            {% for county in counties %}
+                <option value="{{ county.county }}" {% if county.county == selected_county %}selected{% endif %}>
+                    {{ county.county }}
+                </option>
+            {% endfor %}
+        </select>
+        <button class="btn btn-primary" type="submit">Filter</button>
+    </form>
+
+    <div class="community-grid">
+        {% for community in communities %}
+            <article class="community-card">
+                <div class="community-card-icon">🏘️</div>
+                <h3>{{ community.name }}</h3>
+                <p class="community-meta">{{ community.county }} · {{ community.region }}</p>
+                {% if community.population %}
+                    <p>Population: {{ community.population }}</p>
+                {% endif %}
+                <p>{{ community.description }}</p>
+            </article>
+        {% else %}
+            <p>No communities have been added yet.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In | MajiCare{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="form-card">
+        <div class="form-icon">🔐</div>
+        <span class="eyebrow">WELCOME BACK</span>
+        <h1>Sign In</h1>
+        <p>Access your MajiCare community dashboard.</p>
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <label for="username">Username</label>
+            <input id="username" name="username" type="text" required autocomplete="username" placeholder="Enter your username">
+
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="Enter your password">
+
+            <button class="btn btn-primary btn-full" type="submit">Sign In</button>
+        </form>
+
+        <p class="form-footer">New to MajiCare? <a href="{{ url_for('register') }}">Create an account</a></p>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MajiCare helps communities monitor and report water challenges.">
+    <title>{% block title %}MajiCare — Every Drop Counts{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="navbar">
+    <a class="brand" href="{{ url_for('index') }}">💧 MajiCare</a>
+    <button class="menu-toggle" onclick="document.querySelector('.nav-links').classList.toggle('show')" aria-label="Toggle navigation">☰</button>
+    <nav class="nav-links">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('communities') }}">Communities</a>
+        {% if session.get('user_id') %}
+            <a href="{{ url_for('my_reports') }}">My Reports</a>
+            <a href="{{ url_for('create_report') }}">Report an Issue</a>
+            <a href="{{ url_for('water_points') }}">Water Points</a>
+            {% if session.get('role') == 'admin' %}
+                <a href="{{ url_for('admin_dashboard') }}">Administration</a>
+            {% endif %}
+            <span>Hi, {{ session.get('username') }}</span>
+            <a class="btn btn-outline" href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('water_points') }}">Water Points</a>
+            <a class="btn btn-primary" href="{{ url_for('register') }}">Join Community</a>
+        {% endif %}
+    </nav>
+</header>
+
+<main class="page-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+    <p><strong>MajiCare</strong> — Every Drop Counts. Every Community Matters.</p>
+    <p>Supporting smarter community water management.</p>
+    <p>&copy; {{ now_year|default(2026) }} MajiCare</p>
+</footer>
+<script>
+document.querySelectorAll('.alert').forEach(function (alert) {
+    setTimeout(function () {
+        alert.style.opacity = '0';
+        setTimeout(function () { alert.remove(); }, 400);
+    }, 5000);
+});
+</script>
+</body>
+</html>

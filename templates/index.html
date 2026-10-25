@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="MajiCare - Community Water Management">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>MajiCare - Community Water Reports</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/static/icons/icon-192.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+            color: white;
+            padding: 32px 16px;
+            text-align: center;
+        }
+        .hero h1 { margin: 0 0 8px; font-size: 1.6rem; }
+        .hero p { margin: 0 0 16px; opacity: 0.9; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            padding: 16px;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 12px;
+            padding: 14px;
+        }
+        .stat-card .num { font-size: 1.5rem; font-weight: 700; }
+        .stat-card .label { font-size: 0.8rem; opacity: 0.85; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            padding: 18px;
+            margin-top: 16px;
+        }
+        .card h2 { margin: 0 0 12px; color: #134e4a; font-size: 1.1rem; }
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .filter-row input {
+            flex: 1;
+            min-width: 180px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.95rem;
+        }
+        .btn-primary-outline {
+            background: transparent;
+            color: #0f766e;
+            border: 1px solid #0f766e;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        .btn-primary-outline:hover { background: #0f766e; color: white; }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .badge-operating { background: #d1fae5; color: #065f46; }
+        .badge-inspection { background: #fef3c7; color: #92400e; }
+        .badge-containing { background: #fee2e2; color: #991b1b; }
+        .water-point {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 8px;
+            background: #f8faf9;
+        }
+        .water-point .info h3 { margin: 0 0 4px; font-size: 1rem; }
+        .water-point .info p { margin: 0; font-size: 0.85rem; color: #475569; }
+        .communities-list { list-style: none; margin: 0; padding: 0; }
+        .communities-list li {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 8px;
+            background: #f8faf9;
+            font-size: 0.95rem;
+        }
+        .communities-list li .county { font-weight: 700; color: #0f766e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1>💧 MajiCare</h1>
+            <p>Report and track water quality issues in your community.</p>
+            <a class="btn btn-primary btn-full" href="{{ url_for('login') }}">Log in to report</a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flashes">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% endif %}
+        {% endwith %}
+
+        <section class="card stats">
+                    <div class="water-point" data-county="{{ wp['county'] }}">
+                        <div class="info">
+                            <h3>{{ wp['name'] }}</h3>
+                            <p>{{ wp['location'] }} · {{ wp['water_type'] }}</p>
+                        </div>
+                        <span class="badge badge-{{ wp['status']|lower }}">{{ wp['status'] }}</span>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No water points recorded yet.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Communities</h2>
+            <div class="filter-row">
+                <input type="text" id="community-filter" placeholder="Filter by name or county..." oninput="filterCommunities()">
+                <button class="btn-primary-outline" onclick="resetCommunities()">Reset</button>
+            </div>
+            <ul class="communities-list" id="communities-list">
+                {% for c in communities %}
+                    <li><span class="county">{{ c['name'] }}</span> · {{ c['county'] }}</li>
+                {% else %}
+                    <li class="text-muted">No communities found.</li>
+                {% endfor %}
+            </ul>
+        </section>
+    </div>
+
+    <script>
+        const waterPoints = document.querySelectorAll('.water-point');
+        const countyInput = document.getElementById('county-filter');
+        const communityInput = document.getElementById('community-filter');
+
+        function filterWaterPoints() {
+            const term = countyInput.value.toLowerCase();
+            waterPoints.forEach(el => {
+                el.style.display = el.dataset.county.toLowerCase().includes(term) ? '' : 'none';
+            });
+        }
+
+        function resetWaterPoints() {
+            countyInput.value = '';
+            waterPoints.forEach(el => el.style.display = '');
+        }
+
+        function filterCommunities() {
+            const term = communityInput.value.toLowerCase();
+            const items = document.querySelectorAll('#communities-list li');
+            items.forEach(li => {
+                li.style.display = li.textContent.toLowerCase().includes(term) ? '' : 'none';
+            });
+        }
+
+        function resetCommunities() {
+            communityInput.value = '';
+            document.querySelectorAll('#communities-list li').forEach(li => li.style.display = '');
+        }
+    </script>
+</body>
+</html>
+
+            <div class="stat-card">
+                <div class="num">{{ total_reports }}</div>
+                <div class="label">Total reports</div>
+            </div>
+            <div class="stat-card">
+                <div class="num">{{ pending_reports }}</div>
+                <div class="label">Pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="num">{{ water_points|length }}</div>
+                <div class="label">Water points</div>
+            </div>
+            <div class="stat-card">
+                <div class="num">{{ communities|length }}</div>
+                <div class="label">Communities</div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Community Water Points</h2>
+            <div class="filter-row">
+                <input type="text" id="county-filter" placeholder="Filter by county..." oninput="filterWaterPoints()">
+                <button class="btn-primary-outline" onclick="resetWaterPoints()">Reset</button>
+            </div>
+            <div id="water-points">
+
+        {% endwith %}
+
+        <section class="card">
+            <h2>Community Water Points</h2>
+            <div class="filter-row">
+                <input type="text" id="county-filter" placeholder="Filter by county..." oninput="filterWaterPoints()">
+                <button class="btn-primary-outline" onclick="resetWaterPoints()">Reset</button>
+            </div>
+            <div id="water-points">

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="MajiCare - My Reports">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>My Dashboard | MajiCare</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/static/icons/icon-192.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+            color: white;
+            padding: 32px 16px;
+            text-align: center;
+        }
+        .hero h1 { margin: 0 0 8px; font-size: 1.6rem; }
+        .hero p { margin: 0 0 16px; opacity: 0.9; }
+        .hero .welcome { font-size: 1.1rem; opacity: 0.95; }
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.15);
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+            padding: 10px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 12px;
+        }
+        .btn-logout:hover { background: #fee2e2; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            padding: 18px;
+            margin-top: 16px;
+        }
+        .card h2 { margin: 0 0 12px; color: #134e4a; font-size: 1.1rem; }
+        .report {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            background: #f8faf9;
+        }
+        .report .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .report .header .title { font-weight: 700; color: #134e4a; }
+        .report .header .category {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 3px 8px;
+            border-radius: 999px;
+        }
+        .report .category-pending { background: #fef3c7; color: #92400e; }
+        .report .category-in-progress { background: #dbeafe; color: #1e40af; }
+        .report .category-resolved { background: #d1fae5; color: #065f46; }
+        .report .meta { font-size: 0.8rem; color: #64748b; margin-bottom: 6px; }
+        .report .description { font-size: 0.92rem; color: #334155; line-height: 1.5; }
+        .empty-state { text-align: center; padding: 30px; color: #64748b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1 id="username">👋 Welcome</h1>
+            <p>Your water quality reports.</p>
+            <a class="btn-logout" href="{{ url_for('logout') }}">Log out</a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flashes">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="card">
+            <h2>Your reports</h2>
+            <div id="reports">
+                {% for r in reports %}
+                    <div class="report">
+                        <div class="header">
+                            <span class="title">{{ r['title'] }}</span>
+                            <span class="category category-{{ r['status']|lower }}">{{ r['status'] }}</span>
+                        </div>
+                        <div class="meta">
+                            {{ r['category'] }} · {{ r['location'] }} · {{ r['created_at'] }}
+                        </div>
+                        <div class="description">{{ r['description'] }}</div>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>You haven't reported any water issues yet.</p>
+                        <a class="btn btn-primary" href="{{ url_for('create_report') }}">Report a water issue</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const username = "{{ session.username }}";
+        document.getElementById('username').textContent = "👋 Welcome, " + (username || "there") + "!";
+    </script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="MajiCare - Report a water issue">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Report an Issue | MajiCare</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/static/icons/icon-192.png" type="image/png">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+            color: white;
+            padding: 32px 16px;
+            text-align: center;
+        }
+        .hero h1 { margin: 0 0 8px; font-size: 1.6rem; }
+        .hero p { margin: 0 0 16px; opacity: 0.9; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            padding: 20px;
+            max-width: 640px;
+            margin: 20px auto;
+        }
+        .card h2 { margin: 0 0 14px; color: #134e4a; font-size: 1.2rem; text-align: center; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+            font-size: 0.92rem;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        .form-group textarea { min-height: 120px; resize: vertical; }
+        .form-group .error-message {
+            color: #b91c1c;
+            font-size: 0.82rem;
+            margin-top: 4px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: #0f766e;
+            color: white;
+        }
+        .btn-primary:hover { background: #115e59; }
+        .btn-full { width: 100%; }
+        .form-footer {
+            text-align: center;
+            margin-top: 14px;
+            font-size: 0.9rem;
+        }
+        .form-footer a { color: #0f766e; text-decoration: none; }
+        .flashes .flash { margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1>📝 Report an Issue</h1>
+            <p>Share a water quality problem in your community.</p>
+        </header>
+
+
+        <script>
+            const form = document.querySelector('form');
+            const fields = ['title', 'category', 'location', 'description'];
+            const errors = {
+                title: document.getElementById('title-error'),
+                category: document.getElementById('category-error'),
+                location: document.getElementById('location-error'),
+                description: document.getElementById('description-error'),
+            };
+
+            form.addEventListener('submit', function(e) {
+                let valid = true;
+                fields.forEach(function(field) {
+                    const el = document.getElementById(field);
+                    if (!el.value.trim()) {
+                        errors[field].textContent = 'This field is required.';
+                        valid = false;
+                    } else {
+                        errors[field].textContent = '';
+                    }
+                });
+                if (!valid) {
+                    e.preventDefault();
+                    const firstInvalid = form.querySelector('.error-message:empty + input, form .error-message:empty + select');
+                    if (firstInvalid) firstInvalid.focus();
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flashes">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="card">
+            <form method="POST" action="{{ url_for('create_report') }}" novalidate>
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input id="title" name="title" type="text" required placeholder="e.g. My tap is not running">
+                    <span class="error-message" id="title-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" required>
+                        <option value="">Select a category</option>
+                        <option value="Water Shortage">Water Shortage</option>
+                        <option value="Broken Tap">Broken Tap</option>
+                        <option value="Broken Borehole">Broken Borehole</option>
+                        <option value="Water Quality">Water Quality</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <span class="error-message" id="category-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    <input id="location" name="location" type="text" required placeholder="e.g. Street 5, near the school tap">
+                    <span class="error-message" id="location-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" required placeholder="Describe the problem in detail..."></textarea>
+                    <span class="error-message" id="description-error"></span>
+                </div>
+
+                <button class="btn btn-primary btn-full" type="submit">Submit Report</button>
+            </form>
+            <p class="form-footer"><a href="/">← Back to home</a></p>
+        </section>
+    </div>
