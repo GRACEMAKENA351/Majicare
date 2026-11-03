@@ -87,22 +87,42 @@
 
         <script>
             const form = document.querySelector('form');
-            const fields = ['title', 'category', 'location', 'description'];
+            const fields = ['title', 'category', 'county', 'area', 'description'];
             const errors = {
                 title: document.getElementById('title-error'),
                 category: document.getElementById('category-error'),
-                location: document.getElementById('location-error'),
+                county: document.getElementById('county-error'),
+                area: document.getElementById('area-error'),
                 description: document.getElementById('description-error'),
             };
+            const countyAreas = {
+                'Tharaka-Nithi County': ['Maji Ndogo', 'Runyenjes', 'Chuka Town'],
+                'Nairobi City County': ['Kibera', 'Nairobi West', 'Eastleigh'],
+                'Kiambu County': ['Thika', 'Karuri', 'Ruiru'],
+                'Mombasa County': ['Mvita', 'Kisauni', 'Nyali']
+            };
+            const countySelect = document.getElementById('county');
+            const areaSelect = document.getElementById('area');
+
+            countySelect.addEventListener('change', function () {
+                const areas = countyAreas[countySelect.value] || [];
+                areaSelect.innerHTML = '<option value="">Select an area</option>';
+                areas.forEach(function (area) {
+                    areaSelect.add(new Option(area, area));
+                });
+                areaSelect.add(new Option('Other area (enter manually)', 'Other'));
+            });
 
             form.addEventListener('submit', function(e) {
                 let valid = true;
                 fields.forEach(function(field) {
                     const el = document.getElementById(field);
-                    if (!el.value.trim()) {
-                        errors[field].textContent = 'This field is required.';
+                    if (!el || !el.value || !el.value.trim()) {
+                        if (errors[field]) {
+                            errors[field].textContent = 'This field is required.';
+                        }
                         valid = false;
-                    } else {
+                    } else if (errors[field]) {
                         errors[field].textContent = '';
                     }
                 });
@@ -149,9 +169,27 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="location">Location</label>
-                    <input id="location" name="location" type="text" required placeholder="e.g. Street 5, near the school tap">
-                    <span class="error-message" id="location-error"></span>
+                    <label for="county">County</label>
+                    <select id="county" name="county" required>
+                        <option value="">Select a county</option>
+                        <option value="Tharaka-Nithi County">Tharaka-Nithi County</option>
+                        <option value="Nairobi City County">Nairobi City County</option>
+                        <option value="Kiambu County">Kiambu County</option>
+                        <option value="Mombasa County">Mombasa County</option>
+                    </select>
+                    <span class="error-message" id="county-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label for="area">Area of incident</label>
+                    <select id="area" name="area" required>
+                        <option value="">Select a county first</option>
+                        <option value="Maji Ndogo">Maji Ndogo</option>
+                        <option value="Runyenjes">Runyenjes</option>
+                        <option value="Chuka Town">Chuka Town</option>
+                        <option value="Other">Other area (enter manually)</option>
+                    </select>
+                    <span class="error-message" id="area-error"></span>
                 </div>
 
                 <div class="form-group">

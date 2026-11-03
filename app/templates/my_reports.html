@@ -10,10 +10,10 @@
             <h2>My Reports</h2>
             <p>Track every water issue you have submitted.</p>
         </div>
-        <a class="btn btn-outline" href="{{ url_for('create_report') }}">Report a Problem +</a>
+        <a class="btn btn-outline" href="{{ url_for('reports.create_report') }}">Report a Problem +</a>
     </div>
 
-    <form method="get" action="{{ url_for('my_reports') }}" class="filter-form">
+    <form method="get" action="{{ url_for('reports.resident_dashboard') }}" class="filter-form">
         <label for="report-status-filter" class="sr-only">Filter by status</label>
         <select id="report-status-filter" name="status" aria-label="Filter reports by status" onchange="this.form.submit()">
             {% for status_option in allowed_statuses %}
@@ -29,17 +29,23 @@
                     <span class="status-badge status-{{ report.status|lower|replace(' ', '-') }}">{{ report.status }}</span>
                     <h3>{{ report.title }}</h3>
                     <p><strong>Category:</strong> {{ report.category }}</p>
-                    <p><strong>Location:</strong> {{ report.location }}</p>
+                    <p><strong>County:</strong> {{ report.county or 'Not specified' }}</p>
+                    <p><strong>Area:</strong> {{ report.location }}</p>
                     <p>{{ report.description }}</p>
                     <p><small>Submitted {{ report.created_at }}</small></p>
-                    <a class="btn btn-outline" href="{{ url_for('report_details', report_id=report.id) }}">View Details</a>
+                    {% if report.replies %}
+                        <p class="response-note"><strong>Admin responded.</strong> {{ report.replies|length }} response{{ '' if report.replies|length == 1 else 's' }} available.</p>
+                    {% else %}
+                        <p class="response-note">No admin response yet.</p>
+                    {% endif %}
+                    <a class="btn btn-outline" href="{{ url_for('reports.report_details', report_id=report.id) }}">View Details</a>
                 </article>
             {% endfor %}
         </div>
     {% else %}
         <div class="form-card">
             <p>You have not submitted any reports yet for this filter.</p>
-            <a class="btn btn-primary" href="{{ url_for('create_report') }}">Create your first report</a>
+            <a class="btn btn-primary" href="{{ url_for('reports.create_report') }}">Create your first report</a>
         </div>
     {% endif %}
 </section>

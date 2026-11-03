@@ -8,20 +8,49 @@
         <div>
             <span class="eyebrow">REPORT DETAILS</span>
             <h2>{{ report.title }}</h2>
-            <p>Submitted by {{ report.username or 'Unknown user' }}</p>
+            <p>Submitted by {{ report.user.username if report.user else 'Unknown user' }}</p>
         </div>
-        <a class="btn btn-outline" href="{{ url_for('my_reports') }}">Back to My Reports</a>
+        <a class="btn btn-outline" href="{{ url_for('reports.resident_dashboard') }}">Back to My Reports</a>
     </div>
 
     <div class="form-card" style="width: min(760px, 100%);">
         <p><strong>Status:</strong> <span class="status-badge status-{{ report.status|lower|replace(' ', '-') }}">{{ report.status }}</span></p>
         <p><strong>Category:</strong> {{ report.category }}</p>
-        <p><strong>Location:</strong> {{ report.location }}</p>
+        <p><strong>County:</strong> {{ report.county or 'Not specified' }}</p>
+        <p><strong>Area:</strong> {{ report.location }}</p>
         <p><strong>Submitted:</strong> {{ report.created_at }}</p>
         <div>
             <h3>Description</h3>
             <p>{{ report.description }}</p>
         </div>
+    </div>
+
+    <div class="form-card" style="width: min(760px, 100%);">
+        <h3>Admin Response</h3>
+        {% if report.replies %}
+        <div class="response-list">
+            {% for reply in report.replies %}
+            <article class="response-item">
+                <div class="response-header">
+                    <span class="response-avatar">{{ reply.responder.username[0] | upper }}</span>
+                    <span class="response-author">{{ reply.responder.username }} (admin)</span>
+                    <time>{{ reply.created_at }}</time>
+                </div>
+                <p class="response-body">{{ reply.message }}</p>
+            </article>
+            {% endfor %}
+        </div>
+        <p class="response-note">The admin has responded to this report. Thank you for your patience.</p>
+        {% else %}
+        <div class="response-item">
+            <div class="response-header">
+                <span class="response-avatar">&#9679;</span>
+                <span class="response-author">No response yet</span>
+            </div>
+            <p class="response-body">No admin has responded to this issue yet. We'll notify you as soon as a response is available.</p>
+        </div>
+        <p class="response-note">You will be notified when the admin responds to this report.</p>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

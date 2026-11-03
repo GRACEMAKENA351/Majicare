@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Respond to Report | MajiCare{% endblock %}
+
+{% block content %}
+<section class="section admin-page">
+    <div class="section-heading">
+        <div>
+            <span class="dashboard-eyebrow">ADMIN RESPONSE</span>
+            <h1>Respond to Report</h1>
+            <p>Write a reply to the community member who submitted this report.</p>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <article class="stat-card">
+            <span class="stat-icon">▤</span>
+            <p class="stat-label">Report</p>
+            <h2>{{ report.title }}</h2>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon">◉</span>
+            <p class="stat-label">Status</p>
+            <h2>{{ report.status }}</h2>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon">📍</span>
+            <p class="stat-label">Location</p>
+            <h2>{{ report.county or 'Not specified' }} · {{ report.location }}</h2>
+        </article>
+    </div>
+
+    <div class="dashboard-panel">
+        <div class="panel-heading">
+            <div><span class="dashboard-eyebrow">REPORT DETAILS</span><h2>Report Description</h2></div>
+        </div>
+        <article class="report-detail-card">
+            <p>{{ report.description }}</p>
+            <div class="report-meta">
+                <span><small>Category: {{ report.category }}</small></span>
+                <span><small>Submitted: {{ report.created_at }}</small></span>
+                <span><small>Reported by: {{ report.user.username if report.user else 'Unknown' }}</small></span>
+            </div>
+        </article>
+    </div>
+
+    <div class="dashboard-panel">
+        <div class="panel-heading">
+            <div><span class="dashboard-eyebrow">ADMIN RESPONSE</span><h2>Write a response</h2></div>
+        </div>
+        <form method="post" action="{{ url_for('admin.respond_to_report', report_id=report.id) }}" class="response-form">
+            <div class="form-group">
+                <label for="message">Your response to the community member</label>
+                <textarea id="message" name="message" rows="6" required placeholder="e.g. We have scheduled a repair team for next week. We'll keep you updated."></textarea>
+            </div>
+            <button class="btn btn-primary" type="submit">Send Response</button>
+            <a class="btn btn-outline" href="{{ url_for('admin.admin_dashboard') }}">Cancel</a>
+        </form>
+    </div>
+
+    {% if replies %}
+    <div class="dashboard-panel">
+        <div class="panel-heading">
+            <div><span class="dashboard-eyebrow">RESPONSE HISTORY</span><h2>Previous responses</h2></div>
+        </div>
+        <div class="response-list">
+            {% for reply in replies %}
+            <article class="response-item">
+                <div class="response-header">
+                    <span class="response-avatar">{{ reply.responder.username[0] | upper }}</span>
+                    <span class="response-author">{{ reply.responder.username }} (admin)</span>
+                    <time>{{ reply.created_at }}</time>
+                </div>
+                <p class="response-body">{{ reply.message }}</p>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="dashboard-panel">
+        <div class="panel-heading">
+            <div><span class="dashboard-eyebrow">RESPONSE HISTORY</span><h2>Previous responses</h2></div>
+        </div>
+        <p class="no-replies">No responses have been sent yet.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function (alert) {
+        setTimeout(function () {
+            alert.style.opacity = '0';
+            setTimeout(function () { alert.remove(); }, 400);
+        }, 5000);
+    });
+});
+</script>
+{% endblock %}

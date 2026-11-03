@@ -7,28 +7,107 @@
     <div class="section-heading">
         <div>
             <span class="eyebrow">WATER POINTS</span>
-            <h2>Water Points</h2>
-            <p>Review the infrastructure tracked by the MajiCare platform.</p>
+            <h2>Water Points by County</h2>
+            <p>{{ water_point_count }} water points are recorded across the county directory.</p>
         </div>
         {% if session.get('user_id') %}
             <a class="btn btn-outline" href="{{ url_for('create_report') }}">Report a Problem +</a>
         {% endif %}
     </div>
 
-    <div class="water-grid">
-        {% for point in water_points %}
-            <article class="water-card">
-                <div class="water-card-icon">🚰</div>
-                <span class="status-badge status-{{ point.status|lower|replace(' ', '-') }}">{{ point.status }}</span>
-                <h3>{{ point.name }}</h3>
-                <p>📍 {{ point.location }}</p>
-                <p>Water source: {{ point.water_type }}</p>
-            </article>
-        {% else %}
-            <div class="form-card">
-                <p>No water points have been added yet.</p>
-            </div>
+    <p class="demo-note">This directory shows only water points recorded in MajiCare. Counties without entries have no recorded locations yet; this does not mean they have no water. Demo locations are not verified.</p>
+
+    <div class="county-water-list">
+        {% for county, points in county_groups.items() %}
+            <details class="county-water-group" {% if points %}open{% endif %}>
+                <summary>
+                    <span>{{ county }}</span>
+                    <span class="county-water-count">{{ points|length }} listed</span>
+                </summary>
+                {% if points %}
+                    <div class="water-grid">
+                        {% for point in points %}
+                            <article class="water-card">
+                                <div class="water-card-icon">🚰</div>
+                                <span class="status-badge status-{{ point.status|lower|replace(' ', '-') }}">{{ point.status }}</span>
+                                <h3>{{ point.name }}</h3>
+                                <p>📍 {{ point.location }}</p>
+                                <p>Water source: {{ point.water_type }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="county-water-empty">No water points are recorded for this county yet.</p>
+                {% endif %}
+            </details>
         {% endfor %}
+
+        {% if unassigned_water_points %}
+            <details class="county-water-group">
+                <summary>
+                    <span>County not specified</span>
+                    <span class="county-water-count">{{ unassigned_water_points|length }} listed</span>
+                </summary>
+                <div class="water-grid">
+                    {% for point in unassigned_water_points %}
+                        <article class="water-card">
+                            <div class="water-card-icon">🚰</div>
+                            <span class="status-badge status-{{ point.status|lower|replace(' ', '-') }}">{{ point.status }}</span>
+                            <h3>{{ point.name }}</h3>
+                            <p>📍 {{ point.location }}</p>
+                            <p>Water source: {{ point.water_type }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            </details>
+        {% endif %}
     </div>
 </section>
+
+{% if session.get('role') == 'admin' %}
+<section class="section">
+    <div class="section-heading">
+        <div>
+            <span class="eyebrow">ADMINISTRATION</span>
+            <h2>Add a water point</h2>
+            <p>Add a verified point so it appears in the correct county list.</p>
+        </div>
+    </div>
+    <form class="form-card water-point-form" method="post" action="{{ url_for('add_water_point') }}">
+        <label for="point-name">Water point name</label>
+        <input id="point-name" name="name" type="text" required maxlength="120">
+
+        <label for="point-county">County</label>
+        <select id="point-county" name="county" required>
+            <option value="">Select a county</option>
+            {% for county in counties %}
+                <option value="{{ county }}">{{ county }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="point-location">Area or named location</label>
+        <input id="point-location" name="location" type="text" required maxlength="200" placeholder="Town, village, or specific location">
+
+        <label for="point-type">Water source type</label>
+        <input id="point-type" name="water_type" type="text" required maxlength="80" placeholder="Borehole, spring, community tap">
+
+        <label for="point-status">Status</label>
+        <select id="point-status" name="status" required>
+            <option value="Operational">Operational</option>
+            <option value="Needs Inspection">Needs Inspection</option>
+            <option value="Out of Service">Out of Service</option>
+        </select>
+
+        <div class="coordinate-fields">
+            <label for="point-latitude">Latitude <span>(optional)</span></label>
+            <label for="point-longitude">Longitude <span>(optional)</span></label>
+            <input id="point-latitude" name="latitude" type="number" step="any" min="-90" max="90" placeholder="-0.5">
+            <input id="point-longitude" name="longitude" type="number" step="any" min="-180" max="180" placeholder="37.9">
+            <p>Provide verified coordinates to display this water point on the map. Leave both blank if they are unknown.</p>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Add water point</button>
+    </form>
+</section>
+{% endif %}
 {% endblock %}

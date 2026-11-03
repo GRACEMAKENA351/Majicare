@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Profile | MajiCare{% endblock %}
+
+{% block content %}
+<section class="section profile-page">
+    <div class="section-heading">
+        <div><span class="dashboard-eyebrow">YOUR ACCOUNT</span><h1>Profile</h1><p>Your MajiCare account details.</p></div>
+    </div>
+    <article class="dashboard-panel profile-card">
+        <span class="profile-avatar profile-avatar-large" aria-hidden="true">{{ username[:1]|upper }}</span>
+        <div class="profile-details">
+            <h2>{{ username }}</h2>
+            <p class="profile-role">{{ role|title }} account</p>
+        </div>
+        <dl class="profile-facts">
+            <div><dt>Username</dt><dd>{{ username }}</dd></div>
+            <div><dt>Account type</dt><dd>{{ role|title }}</dd></div>
+            <div><dt>Recent report area</dt><dd>{{ recent_area }}</dd></div>
+        </dl>
+        <p class="profile-note">Community membership details are not collected in your account yet. The area above is taken from your latest report, when available.</p>
+        <a class="btn btn-primary" href="{{ url_for('my_reports') }}">View My Reports</a>
+    </article>
+</section>
+{% endblock %}

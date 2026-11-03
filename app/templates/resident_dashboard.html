@@ -1,36 +1,162 @@
 {% extends "base.html" %}
 
-{% block title %}My Dashboard | MajiCare{% endblock %}
+{% block title %}Dashboard | MajiCare{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+{% endblock %}
 
 {% block content %}
-<section class="section">
-    <div class="section-heading">
-        <div>
-            <span class="eyebrow">MY REPORTS</span>
-            <h2>Resident Dashboard</h2>
-            <p>Track the status of your submitted water issues.</p>
+<section class="dashboard-welcome">
+    <div class="welcome-copy">
+        <span class="dashboard-eyebrow">YOUR COMMUNITY WATER OVERVIEW</span>
+        <h1>Welcome, {{ session.get('username', 'MajiCare user') }}!</h1>
+        <p>Every report and every working water point helps build a healthier, more resilient community.</p>
+        <div class="welcome-meta">
+            <span><span aria-hidden="true">▦</span> {{ today }}</span>
+            <span><span aria-hidden="true">⌖</span> Your area: <strong>{{ recent_area }}</strong></span>
         </div>
-        <a class="btn btn-outline" href="{{ url_for('create_report') }}">Report a Problem +</a>
+    </div>
+    <div class="welcome-art" aria-hidden="true">
+        <span class="welcome-orbit orbit-one"></span>
+        <span class="welcome-orbit orbit-two"></span>
+        <span class="welcome-drop">💧</span>
+        <span class="welcome-wave wave-one"></span>
+        <span class="welcome-wave wave-two"></span>
+    </div>
+</section>
+
+<section class="dashboard-summary" aria-label="Water point summary">
+    <article class="summary-card summary-blue">
+        <div class="summary-card-top"><span class="summary-icon" aria-hidden="true">◉</span><span class="summary-trend">LIVE</span></div>
+        <p>Total Water Points</p>
+        <div class="summary-value">{{ summary.total }}</div>
+        <small>Across the MajiCare directory</small>
+    </article>
+    <article class="summary-card summary-green">
+        <div class="summary-card-top"><span class="summary-icon" aria-hidden="true">✓</span><span class="summary-trend">{{ ((summary.working / summary.total * 100)|round|int) if summary.total else 0 }}%</span></div>
+        <p>Working</p>
+        <div class="summary-value">{{ summary.working }}</div>
+        <small>Operational water points</small>
+    </article>
+    <article class="summary-card summary-orange">
+        <div class="summary-card-top"><span class="summary-icon" aria-hidden="true">!</span><span class="summary-trend">{{ ((summary.attention / summary.total * 100)|round|int) if summary.total else 0 }}%</span></div>
+        <p>Needs Attention</p>
+        <div class="summary-value">{{ summary.attention }}</div>
+        <small>Awaiting inspection or service</small>
+    </article>
+    <article class="summary-card summary-red">
+        <div class="summary-card-top"><span class="summary-icon" aria-hidden="true">×</span><span class="summary-trend">{{ ((summary.out_of_service / summary.total * 100)|round|int) if summary.total else 0 }}%</span></div>
+        <p>Out of Service</p>
+        <div class="summary-value">{{ summary.out_of_service }}</div>
+        <small>Currently unavailable</small>
+    </article>
+</section>
+
+<section class="dashboard-main-grid" aria-label="Community water dashboard">
+    <div class="dashboard-primary">
+        <div class="dashboard-data-grid">
+            <article class="dashboard-panel map-panel">
+                <div class="panel-heading">
+                    <div><span class="dashboard-eyebrow">EXPLORE</span><h2>Water Points Map</h2></div>
+                    <a class="text-link" href="{{ url_for('water_map') }}">Full map <span aria-hidden="true">↗</span></a>
+                </div>
+                {% if unmapped_count %}
+                    <p class="map-note"><span aria-hidden="true">ⓘ</span> {{ unmapped_count }} listed {{ 'point has' if unmapped_count == 1 else 'points have' }} no verified coordinates yet and {{ 'is' if unmapped_count == 1 else 'are' }} not plotted.</p>
+                {% endif %}
+                <div class="map-frame">
+                    <div class="water-points-map" id="water-points-map" role="application" aria-label="Map of water points with operational status markers"></div>
+                    {% if not map_points %}<div class="map-empty-overlay" role="status">No water points have verified map coordinates yet. No locations have been estimated.</div>{% endif %}
+                    <div class="map-unavailable" hidden>Map tiles could not be loaded. Your water point directory is still available below.</div>
+                </div>
+                <div class="map-footer">
+                    <div class="map-legend" aria-label="Map marker status legend">
+                        <span><i class="legend-dot dot-green"></i> Working</span>
+                        <span><i class="legend-dot dot-orange"></i> Needs attention</span>
+                        <span><i class="legend-dot dot-red"></i> Out of service</span>
+                    </div>
+                    <span class="map-attribution">© OpenStreetMap contributors</span>
+                </div>
+            </article>
+
+            <article class="dashboard-panel directory-panel">
+                <div class="panel-heading">
+                    <div><span class="dashboard-eyebrow">DIRECTORY</span><h2>Water Points</h2></div>
+                    <a class="text-link" href="{{ url_for('water_points') }}">View all <span aria-hidden="true">→</span></a>
+                </div>
+                <div class="directory-table-wrap">
+                    <table class="directory-table">
+                        <thead><tr><th scope="col">Water point</th><th scope="col">Community</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Details</span></th></tr></thead>
+                        <tbody>
+                        {% for point in water_points[:5] %}
+                            <tr>
+                                <td><strong>{{ point.name }}</strong><small>{{ point.water_type }}</small></td>
+                                <td>{{ point.community_name }}</td>
+                                <td><span class="status-pill status-{{ point.status|lower|replace(' ', '-') }}">{{ point.status }}</span></td>
+                                <td><a class="table-view-link" href="{{ url_for('water_points') }}" aria-label="View {{ point.name }}">View</a></td>
+                            </tr>
+                        {% else %}
+                            <tr><td class="table-empty" colspan="4">No water points have been recorded yet.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <a class="directory-mobile-link" href="{{ url_for('water_points') }}">Browse the full water point directory →</a>
+            </article>
+        </div>
     </div>
 
-    {% if reports %}
-        <div class="water-grid">
+    <aside class="dashboard-panel recent-reports-panel">
+        <div class="panel-heading">
+            <div><span class="dashboard-eyebrow">LATEST ACTIVITY</span><h2>Recent Reports</h2></div>
+            <a class="panel-icon-link" href="{{ url_for('my_reports') }}" aria-label="View all my reports">↗</a>
+        </div>
+        <div class="report-activity-list">
             {% for report in reports %}
-                <article class="water-card">
-                    <span class="status-badge status-{{ report.status|lower|replace(' ', '-') }}">{{ report.status }}</span>
-                    <h3>{{ report.title }}</h3>
-                    <p><strong>Category:</strong> {{ report.category }}</p>
-                    <p><strong>Location:</strong> {{ report.location }}</p>
-                    <p>{{ report.description }}</p>
-                    <p><small>Submitted {{ report.created_at }}</small></p>
+                <article class="report-activity">
+                    <span class="report-type-icon" aria-hidden="true">{{ '!' if report.status == 'Pending' else '↻' if report.status == 'In Progress' else '✓' }}</span>
+                    <div class="report-activity-copy">
+                        <h3>{{ report.title }}</h3>
+                        <p>{{ report.location }}{% if report.county %} · {{ report.county }}{% endif %}</p>
+                        <time>{{ report.created_at }}</time>
+                    </div>
+                    <span class="status-pill status-{{ report.status|lower|replace(' ', '-') }}">{{ report.status }}</span>
                 </article>
+            {% else %}
+                <div class="reports-empty">
+                    <span aria-hidden="true">▤</span>
+                    <p>No reports yet. Your community is ready to hear from you.</p>
+                </div>
             {% endfor %}
         </div>
-    {% else %}
-        <div class="form-card">
-            <p>You have not submitted any reports yet.</p>
-            <a class="btn btn-primary" href="{{ url_for('create_report') }}">Create your first report</a>
-        </div>
-    {% endif %}
+        <a class="reports-all-link" href="{{ url_for('my_reports') }}">See all reports <span aria-hidden="true">→</span></a>
+    </aside>
 </section>
+
+<section class="dashboard-actions" aria-label="Helpful actions">
+    <article class="action-card action-report">
+        <span class="action-icon" aria-hidden="true">＋</span>
+        <div><h2>Report a Water Service Issue</h2><p>Help us respond to shortages, leaks and water quality concerns.</p></div>
+        <a class="btn action-button" href="{{ url_for('create_report') }}">Create New Report <span aria-hidden="true">→</span></a>
+    </article>
+    <article class="action-card action-community">
+        <span class="action-icon" aria-hidden="true">⌖</span>
+        <div><h2>Explore Communities</h2><p>Discover the communities participating in MajiCare.</p></div>
+        <a class="btn action-button" href="{{ url_for('communities') }}">View Communities <span aria-hidden="true">→</span></a>
+    </article>
+    <article class="action-card action-help">
+        <span class="action-icon" aria-hidden="true">?</span>
+        <div><h2>Need Help?</h2><p>Send a message directly to the MajiCare admin team.</p></div>
+        <a class="btn action-button" href="{{ url_for('contact_admin') }}">Contact Admin <span aria-hidden="true">→</span></a>
+    </article>
+</section>
+
+<script id="water-points-data" type="application/json">{{ map_points|tojson }}</script>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}" defer></script>
 {% endblock %}

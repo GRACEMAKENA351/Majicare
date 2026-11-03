@@ -4,48 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="MajiCare helps communities monitor and report water challenges.">
+    <meta name="theme-color" content="#102747">
     <title>{% block title %}MajiCare — Every Drop Counts{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
 </head>
-<body>
-<header class="navbar">
-    <a class="brand" href="{{ url_for('index') }}">💧 MajiCare</a>
-    <button class="menu-toggle" onclick="document.querySelector('.nav-links').classList.toggle('show')" aria-label="Toggle navigation">☰</button>
-    <nav class="nav-links">
-        <a href="{{ url_for('index') }}">Home</a>
-        <a href="{{ url_for('communities') }}">Communities</a>
-        {% if session.get('user_id') %}
-            <a href="{{ url_for('my_reports') }}">My Reports</a>
-            <a href="{{ url_for('create_report') }}">Report an Issue</a>
+<body class="{% if session.get('user_id') %}app-mode{% endif %}">
+{% if session.get('user_id') %}
+    <header class="app-topbar">
+        <button class="sidebar-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="app-sidebar">
+            <span aria-hidden="true">☰</span>
+        </button>
+        <a class="app-brand" href="{{ url_for('resident_dashboard') }}">
+            <span class="brand-drop" aria-hidden="true">💧</span>
+            <span>MajiCare</span>
+        </a>
+        <p class="app-tagline">Clean Water <span>•</span> Healthy Communities <span>•</span> A Brighter Future</p>
+        <div class="topbar-actions">
+            <a class="notification-link" href="{{ url_for('admin_dashboard') if session.get('role') == 'admin' else url_for('my_reports') }}" aria-label="Notifications and recent reports">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+            </a>
+            <a class="profile-chip" href="{{ url_for('profile') }}">
+                <span class="profile-avatar" aria-hidden="true">{{ session.get('username', 'M')[:1]|upper }}</span>
+                <span class="profile-copy"><strong>{{ session.get('username', 'MajiCare user') }}</strong><small>{{ session.get('role', 'resident')|title }}</small></span>
+            </a>
+        </div>
+    </header>
+
+    <div class="app-shell">
+        <aside class="app-sidebar" id="app-sidebar" aria-label="Main navigation">
+            <div class="sidebar-section-label">MENU</div>
+            <nav class="sidebar-nav">
+                <a class="sidebar-link {% if request.endpoint == 'resident_dashboard' %}active{% endif %}" href="{{ url_for('resident_dashboard') }}">
+                    <span class="sidebar-icon" aria-hidden="true">⌂</span><span>Dashboard</span>
+                </a>
+                <a class="sidebar-link {% if request.endpoint in ['water_points', 'add_water_point'] %}active{% endif %}" href="{{ url_for('water_points') }}">
+                    <span class="sidebar-icon" aria-hidden="true">◉</span><span>Water Points</span>
+                </a>
+                <a class="sidebar-link {% if request.endpoint == 'water_map' %}active{% endif %}" href="{{ url_for('water_map') }}">
+                    <span class="sidebar-icon" aria-hidden="true">⌖</span><span>Map</span>
+                </a>
+                <a class="sidebar-link {% if request.endpoint in ['my_reports', 'report_details'] %}active{% endif %}" href="{{ url_for('my_reports') }}">
+                    <span class="sidebar-icon" aria-hidden="true">▤</span><span>My Reports</span>
+                </a>
+                <a class="sidebar-link {% if request.endpoint == 'communities' %}active{% endif %}" href="{{ url_for('communities') }}">
+                    <span class="sidebar-icon" aria-hidden="true">♧</span><span>Communities</span>
+                </a>
+                <a class="sidebar-link {% if request.endpoint == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}">
+                    <span class="sidebar-icon" aria-hidden="true">○</span><span>Profile</span>
+                </a>
+                {% if session.get('role') == 'admin' %}
+                    <a class="sidebar-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+                        <span class="sidebar-icon" aria-hidden="true">⚙</span><span>Admin</span>
+                    </a>
+                {% endif %}
+            </nav>
+            <aside class="conservation-card">
+                <span class="conservation-icon" aria-hidden="true">✦</span>
+                <strong>Every drop matters</strong>
+                <p>Small actions today protect tomorrow's water.</p>
+                <a href="{{ url_for('communities') }}">Explore communities <span aria-hidden="true">→</span></a>
+            </aside>
+            <a class="sidebar-link sidebar-logout" href="{{ url_for('logout') }}">
+                <span class="sidebar-icon" aria-hidden="true">↪</span><span>Logout</span>
+            </a>
+        </aside>
+        <div class="sidebar-backdrop" aria-hidden="true"></div>
+        <div class="app-content">
+            <main class="app-main page-container" id="main-content">
+{% else %}
+    <header class="navbar">
+        <a class="brand" href="{{ url_for('index') }}">💧 MajiCare</a>
+        <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="public-nav">☰</button>
+        <nav class="nav-links" id="public-nav">
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('communities') }}">Communities</a>
             <a href="{{ url_for('water_points') }}">Water Points</a>
-            {% if session.get('role') == 'admin' %}
-                <a href="{{ url_for('admin_dashboard') }}">Administration</a>
-            {% endif %}
-            <span>Hi, {{ session.get('username') }}</span>
-            <a class="btn btn-outline" href="{{ url_for('logout') }}">Logout</a>
-        {% else %}
             <a href="{{ url_for('login') }}">Login</a>
-            <a href="{{ url_for('water_points') }}">Water Points</a>
             <a class="btn btn-primary" href="{{ url_for('register') }}">Join Community</a>
-        {% endif %}
-    </nav>
-</header>
+        </nav>
+    </header>
+    <main class="page-container">
+{% endif %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="status">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+{% if session.get('user_id') %}
+            <footer class="app-footer">
+                <span><strong>MajiCare</strong> · Clean Water, Stronger Communities</span>
+                <span>&copy; {{ now_year|default(2026) }} MajiCare</span>
+            </footer>
+        </div>
+    </div>
+{% else %}
+    <footer class="footer">
+        <p><strong>MajiCare</strong> — Every Drop Counts. Every Community Matters.</p>
+        <p>Supporting smarter community water management.</p>
+        <p>&copy; {{ now_year|default(2026) }} MajiCare</p>
+    </footer>
+{% endif %}
 
-<main class="page-container">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
-            <div class="alert alert-{{ category }}">{{ message }}</div>
-        {% endfor %}
-    {% endwith %}
-
-    {% block content %}{% endblock %}
-</main>
-
-<footer class="footer">
-    <p><strong>MajiCare</strong> — Every Drop Counts. Every Community Matters.</p>
-    <p>Supporting smarter community water management.</p>
-    <p>&copy; {{ now_year|default(2026) }} MajiCare</p>
-</footer>
 <script>
 document.querySelectorAll('.alert').forEach(function (alert) {
     setTimeout(function () {
@@ -53,6 +115,41 @@ document.querySelectorAll('.alert').forEach(function (alert) {
         setTimeout(function () { alert.remove(); }, 400);
     }, 5000);
 });
+
+const sidebarToggle = document.querySelector('.sidebar-toggle');
+const sidebar = document.querySelector('.app-sidebar');
+const sidebarBackdrop = document.querySelector('.sidebar-backdrop');
+
+function closeSidebar() {
+    if (sidebar && sidebarToggle) {
+        sidebar.classList.remove('is-open');
+        sidebarToggle.setAttribute('aria-expanded', 'false');
+    }
+}
+
+if (sidebarToggle && sidebar) {
+    sidebarToggle.addEventListener('click', function () {
+        const isOpen = sidebar.classList.toggle('is-open');
+        sidebarToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+    sidebar.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', closeSidebar);
+    });
+}
+
+if (sidebarBackdrop) {
+    sidebarBackdrop.addEventListener('click', closeSidebar);
+}
+
+const publicMenuToggle = document.querySelector('.menu-toggle');
+const publicNav = document.querySelector('.nav-links');
+if (publicMenuToggle && publicNav) {
+    publicMenuToggle.addEventListener('click', function () {
+        const isOpen = publicNav.classList.toggle('show');
+        publicMenuToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+}
 </script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

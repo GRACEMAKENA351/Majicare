@@ -24,8 +24,23 @@
                 <option value="Other">Other</option>
             </select>
 
-            <label for="location">Location</label>
-            <input id="location" name="location" type="text" required placeholder="Village, market, school, etc.">
+            <label for="county">County</label>
+            <select id="county" name="county" required>
+                <option value="">Select a county</option>
+                {% for county in counties %}
+                    <option value="{{ county }}">{{ county }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="area">Area of incident</label>
+            <select id="area" name="area" required disabled>
+                <option value="">Select a county first</option>
+            </select>
+
+            <div id="other-area-field" hidden>
+                <label for="other-area">Enter the area</label>
+                <input id="other-area" name="other_area" type="text" maxlength="200" placeholder="Village, market, school, or landmark">
+            </div>
 
             <label for="description">Description</label>
             <textarea id="description" name="description" rows="5" required placeholder="Describe the problem and any urgent details..."></textarea>
@@ -34,4 +49,33 @@
         </form>
     </div>
 </section>
+
+<script>
+    const countyAreas = {{ county_areas|tojson }};
+    const countySelect = document.getElementById("county");
+    const areaSelect = document.getElementById("area");
+    const otherAreaField = document.getElementById("other-area-field");
+    const otherAreaInput = document.getElementById("other-area");
+
+    countySelect.addEventListener("change", function () {
+        areaSelect.replaceChildren(new Option("Select an area", ""));
+        const areas = countyAreas[countySelect.value] || [];
+
+        areas.forEach(function (area) {
+            areaSelect.add(new Option(area, area));
+        });
+
+        areaSelect.add(new Option("Other area (enter manually)", "Other"));
+        areaSelect.disabled = false;
+        otherAreaField.hidden = true;
+        otherAreaInput.required = false;
+        otherAreaInput.value = "";
+    });
+
+    areaSelect.addEventListener("change", function () {
+        const isOther = areaSelect.value === "Other";
+        otherAreaField.hidden = !isOther;
+        otherAreaInput.required = isOther;
+    });
+</script>
 {% endblock %}

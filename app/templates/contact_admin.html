@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Admin | MajiCare{% endblock %}
+
+{% block content %}
+<section class="section contact-page">
+    <div class="section-heading">
+        <div><span class="dashboard-eyebrow">WE'RE HERE TO HELP</span><h1>Contact the Admin Team</h1><p>Send a message to the MajiCare administrators. Your message is visible to authorized admins in their dashboard.</p></div>
+    </div>
+    <form class="form-card contact-form" method="post" action="{{ url_for('contact_admin') }}">
+        <label for="contact-message">Your message</label>
+        <textarea id="contact-message" name="message" rows="7" maxlength="{{ max_message_length }}" required placeholder="How can our team help?"></textarea>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <small class="form-hint">Maximum {{ max_message_length }} characters. Do not include passwords or other sensitive information.</small>
+        <button class="btn btn-primary btn-full" type="submit">Send message</button>
+        <a class="contact-cancel" href="{{ url_for('resident_dashboard') }}">Return to dashboard</a>
+    </form>
+</section>
+{% endblock %}

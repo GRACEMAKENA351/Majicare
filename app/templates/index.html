@@ -56,8 +56,8 @@
         <select name="county" id="county-filter" aria-label="Filter by county">
             <option value="">All Counties</option>
             {% for county in counties %}
-                <option value="{{ county.county }}" {% if county.county == selected_county %}selected{% endif %}>
-                    {{ county.county }}
+                <option value="{{ county }}" {% if county == selected_county %}selected{% endif %}>
+                    {{ county }}
                 </option>
             {% endfor %}
         </select>

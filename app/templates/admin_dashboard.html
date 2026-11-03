@@ -1,78 +1,91 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Dashboard | MajiCare{% endblock %}
+{% block title %}Admin | MajiCare{% endblock %}
 
 {% block content %}
-<section class="section">
+<section class="section admin-page">
     <div class="section-heading">
         <div>
-            <span class="eyebrow">ADMIN PANEL</span>
-            <h2>System Overview</h2>
-            <p>Review reports, monitor status and manage community water issues.</p>
+            <span class="dashboard-eyebrow">ADMINISTRATION</span>
+            <h1>System Overview</h1>
+            <p>Review reports, monitor water points and respond to community messages.</p>
         </div>
+        <a class="btn btn-primary" href="{{ url_for('reports.resident_dashboard') }}">View Dashboard</a>
     </div>
 
     <div class="stats-grid">
-        <article class="stat-card">
-            <span class="stat-icon">📊</span>
-            <p class="stat-label">Total reports</p>
-            <h2>{{ summary.total }}</h2>
-        </article>
-        <article class="stat-card">
-            <span class="stat-icon">⏳</span>
-            <p class="stat-label">Pending</p>
-            <h2>{{ summary.pending }}</h2>
-        </article>
-        <article class="stat-card">
-            <span class="stat-icon">✅</span>
-            <p class="stat-label">Resolved</p>
-            <h2>{{ summary.resolved }}</h2>
-        </article>
+        <article class="stat-card"><span class="stat-icon">▤</span><p class="stat-label">Total reports</p><h2>{{ summary.total }}</h2></article>
+        <article class="stat-card"><span class="stat-icon">◷</span><p class="stat-label">Pending</p><h2>{{ summary.pending }}</h2></article>
+        <article class="stat-card"><span class="stat-icon">✓</span><p class="stat-label">Resolved</p><h2>{{ summary.resolved }}</h2></article>
+        <article class="stat-card"><span class="stat-icon">◉</span><p class="stat-label">Water points</p><h2>{{ summary.water_points }}</h2></article>
     </div>
 
-    <form method="get" action="{{ url_for('admin_dashboard') }}" class="filter-form" style="margin-top: 20px;">
-        <label for="admin-status-filter" class="sr-only">Filter reports by status</label>
-        <select id="admin-status-filter" name="status" aria-label="Filter admin reports by status" onchange="this.form.submit()">
-            {% for status_option in allowed_statuses %}
-                <option value="{{ status_option }}" {% if status_option == selected_status %}selected{% endif %}>{{ status_option }}</option>
-            {% endfor %}
-        </select>
-    </form>
+    <article class="dashboard-panel admin-table-card">
+        <div class="panel-heading">
+            <div><span class="dashboard-eyebrow">SERVICE REQUESTS</span><h2>Latest reports</h2></div>
+            <form method="get" action="{{ url_for('admin.admin_dashboard') }}" class="filter-form">
+                <label for="admin-status-filter" class="sr-only">Filter reports by status</label>
+                <select id="admin-status-filter" name="status" aria-label="Filter admin reports by status" onchange="this.form.submit()">
+                    {% for status_option in allowed_statuses %}
+                        <option value="{{ status_option }}" {% if status_option == selected_status %}selected{% endif %}>{{ status_option }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+        <div class="directory-table-wrap">
+            <table class="directory-table">
+                <thead><tr><th scope="col">Title</th><th scope="col">Submitted by</th><th scope="col">County</th><th scope="col">Area</th><th scope="col">Status</th><th scope="col">Response</th></tr></thead>
+                <tbody>
+                    {% for report in reports %}
+                        <tr>
+                            <td><strong>{{ report.title }}</strong><small>{{ report.category }} · {{ report.created_at }}</small><a class="table-view-link" href="{{ url_for('admin.report_details', report_id=report.id) }}">View / respond</a></td>
+                            <td>{{ report.user.username if report.user else 'Unknown' }}</td>
+                            <td>{{ report.county or 'Not specified' }}</td>
+                            <td>{{ report.location }}</td>
+                            <td>
+                                <form method="post" action="{{ url_for('admin.update_report_status', report_id=report.id) }}">
+                                    <label class="sr-only" for="report-status-{{ report.id }}">Status for {{ report.title }}</label>
+                                    <select id="report-status-{{ report.id }}" name="status" onchange="this.form.submit()">
+                                        <option value="Pending" {% if report.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                        <option value="In Progress" {% if report.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                        <option value="Resolved" {% if report.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                                    </select>
+                                </form>
+                            </td>
+                            <td>
+                                {% if report.replies %}
+                                    <span class="status-pill status-resolved">Responded</span>
+                                    <small>{{ report.replies|length }} response{{ '' if report.replies|length == 1 else 's' }}</small>
+                                {% else %}
+                                    <span class="status-pill status-pending">Awaiting response</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td class="table-empty" colspan="6">No reports found for this filter.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
 
-    <div class="dashboard-card" style="padding: 25px; margin-top: 20px;">
-        <h3>Latest reports</h3>
-        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-            <thead>
-                <tr style="text-align: left; border-bottom: 1px solid #e0eaf0;">
-                    <th style="padding: 10px;">Title</th>
-                    <th style="padding: 10px;">Submitted By</th>
-                    <th style="padding: 10px;">Location</th>
-                    <th style="padding: 10px;">Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for report in reports %}
-                    <tr style="border-bottom: 1px solid #e0eaf0;">
-                        <td style="padding: 10px;">{{ report.title }}</td>
-                        <td style="padding: 10px;">{{ report.username or 'Unknown' }}</td>
-                        <td style="padding: 10px;">{{ report.location }}</td>
-                        <td style="padding: 10px;">
-                            <form method="POST" action="{{ url_for('update_report_status', report_id=report.id) }}">
-                                <select name="status" onchange="this.form.submit()">
-                                    <option value="Pending" {% if report.status == 'Pending' %}selected{% endif %}>Pending</option>
-                                    <option value="In Progress" {% if report.status == 'In Progress' %}selected{% endif %}>In Progress</option>
-                                    <option value="Resolved" {% if report.status == 'Resolved' %}selected{% endif %}>Resolved</option>
-                                </select>
-                            </form>
-                        </td>
-                    </tr>
-                {% else %}
-                    <tr>
-                        <td colspan="4" style="padding: 12px;">No reports found.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <article class="dashboard-panel admin-table-card" id="contact-messages">
+        <div class="panel-heading">
+            <div><span class="dashboard-eyebrow">COMMUNITY SUPPORT</span><h2>Contact messages</h2></div>
+            <span class="directory-count">{{ support_messages|length }} recent</span>
+        </div>
+        <div class="directory-table-wrap">
+            <table class="directory-table">
+                <thead><tr><th scope="col">From</th><th scope="col">Message</th><th scope="col">Received</th></tr></thead>
+                <tbody>
+                    {% for message in support_messages %}
+                        <tr><td><strong>{{ message.user.username if message.user else 'Unknown' }}</strong></td><td>{{ message.message }}</td><td>{{ message.created_at }}</td></tr>
+                    {% else %}
+                        <tr><td class="table-empty" colspan="3">No messages have been received yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
 </section>
 {% endblock %}

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="420" viewBox="0 0 1000 420" fill="none">
+  <defs>
+    <linearGradient id="ocean" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#173B70"/>
+      <stop offset="1" stop-color="#246AC2"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="matrix(216 151 -216 309 824 69)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#72D6EE" stop-opacity=".46"/>
+      <stop offset="1" stop-color="#72D6EE" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <path fill="url(#ocean)" d="M0 0h1000v420H0z"/>
+  <path fill="url(#glow)" d="M0 0h1000v420H0z"/>
+  <circle cx="825" cy="193" r="130" stroke="#fff" stroke-opacity=".14"/>
+  <circle cx="825" cy="193" r="98" stroke="#fff" stroke-opacity=".12"/>
+  <path d="M0 309c126-34 209-30 320 5s191 41 293 9c121-38 221-84 387-26v123H0V309Z" fill="#55B9D2" fill-opacity=".12"/>
+  <path d="M0 351c151-37 249-10 365 20 121 32 216 27 332-15 93-34 200-47 303-16v80H0v-69Z" fill="#94E2E9" fill-opacity=".14"/>
+  <path d="M0 393c177-23 268-3 383 19 135 26 244 17 371-18 77-21 161-30 246-17v43H0v-27Z" fill="#D9F6F4" fill-opacity=".14"/>
+</svg>
