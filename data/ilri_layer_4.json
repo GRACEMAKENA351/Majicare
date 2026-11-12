@@ -1,0 +1,40 @@
+<html lang="en">
+<head>
+  <title></title>
+  <link href='/ESRI.ArcGIS.SDS.REST.css' rel='stylesheet' type='text/css'>
+  <link rel='SHORTCUT ICON' href='/favicon.ico'>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/> 
+</head>
+<body>
+<table width="100%" id="userTable" class="userTable">
+<tr>
+<td class="titlecell">ArcGIS REST Services Directory</td>
+</tr>
+</table>
+<table id="navTable" class="navTable" width="100%">
+<tbody>
+<tr valign="top">
+<td class="breadcrumbs">
+<span id="homeBreadcrumbs"><a href="/cc7nIINtrZ67dyVJ/ArcGIS/rest/services">Home</a> > <a href="/cc7nIINtrZ67dyVJ/ArcGIS/rest/services">services</a> </span>> <a href="/cc7nIINtrZ67dyVJ/ArcGIS/rest/services/Water_Supply_Control/FeatureServer">Water_Supply_Control (FeatureServer)</a> </td>
+<td align="right">
+ | <a href="http://resources.arcgis.com/en/help/arcgis-rest-api/" target="_blank">API Reference</a></td>
+</tr>
+</tbody>
+</table>
+<div id="jsonLinkTable">
+<table>
+<tr>
+<td class="apiref">
+<a href="?f=pjson" target="_blank">JSON</a>
+</td>
+</tr>
+</table>
+</div>
+<br/><br/>
+<div class='restBody'>
+<div class="restErrors">
+The requested layer (layerId: =pjson) was not found.<br/>
+</div>
+</div>
+</body>
+</html>

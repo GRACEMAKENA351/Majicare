@@ -1385,6 +1385,62 @@ body.app-mode {
     color: #386eb8;
 }
 
+.response-list {
+    display: grid;
+    gap: 12px;
+}
+
+.response-item {
+    padding: 16px;
+    border: 1px solid #dce6ee;
+    border-radius: 12px;
+    background: #f8fbfd;
+}
+
+.response-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.response-avatar {
+    display: inline-grid;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    border-radius: 50%;
+    background: #e3f3f1;
+    color: #176f68;
+    font-size: 0.8rem;
+    font-weight: 750;
+}
+
+.response-author {
+    color: #263a57;
+    font-weight: 700;
+}
+
+.response-header time {
+    margin-left: auto;
+    color: #7c8998;
+    font-size: 0.75rem;
+}
+
+.response-body {
+    margin: 12px 0 0;
+    color: #43536a;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.response-note {
+    margin: 12px 0 0;
+    color: #52657a;
+    font-size: 0.9rem;
+}
+
 .table-view-link {
     font-size: 0.68rem;
 }

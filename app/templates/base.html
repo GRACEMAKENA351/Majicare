@@ -53,9 +53,12 @@
                 <a class="sidebar-link {% if request.endpoint == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}">
                     <span class="sidebar-icon" aria-hidden="true">○</span><span>Profile</span>
                 </a>
-                {% if session.get('role') == 'admin' %}
-                    <a class="sidebar-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+                {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                    <a class="sidebar-link {% if request.endpoint == 'admin.admin_dashboard' or request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin.admin_dashboard') }}">
                         <span class="sidebar-icon" aria-hidden="true">⚙</span><span>Admin</span>
+                    </a>
+                    <a class="sidebar-link {% if request.endpoint == 'admin.water_points' %}active{% endif %}" href="{{ url_for('admin.water_points') }}">
+                        <span class="sidebar-icon" aria-hidden="true">◉</span><span>Manage Water Points</span>
                     </a>
                 {% endif %}
             </nav>

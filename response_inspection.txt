@@ -1,0 +1,341 @@
+========== MODELS ==========
+"""SQLAlchemy models for the MajiCare application."""
+
+from datetime import datetime, timezone
+
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
+
+class User(db.Model):
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.Text, unique=True, nullable=False)
+    email = db.Column(db.Text, nullable=True)
+    password_hash = db.Column(db.Text, nullable=False)
+    role = db.Column(db.Text, nullable=False, default="resident")
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    reports = db.relationship("Report", back_populates="user", foreign_keys="Report.user_id")
+    support_messages = db.relationship(
+        "SupportMessage", back_populates="user", foreign_keys="SupportMessage.user_id"
+    )
+
+    def set_password(self, password: str) -> None:
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password: str) -> bool:
+        from werkzeug.security import check_password_hash
+
+        return check_password_hash(self.password_hash, password)
+
+    def __repr__(self) -> str:
+        return f"<User {self.username!r}>"
+
+
+class Community(db.Model):
+    __tablename__ = "communities"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, unique=True, nullable=False)
+    county = db.Column(db.Text, nullable=False)
+    region = db.Column(db.Text, nullable=False)
+    population = db.Column(db.Integer, nullable=True)
+    description = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    water_points = db.relationship(
+        "WaterPoint", back_populates="community", foreign_keys="WaterPoint.community_id"
+    )
+    reports = db.relationship("Report", back_populates="community", foreign_keys="Report.community_id")
+
+    def __repr__(self) -> str:
+        return f"<Community {self.name!r}>"
+
+
+class WaterPoint(db.Model):
+    __tablename__ = "water_points"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, nullable=False)
+    community_id = db.Column(db.Integer, db.ForeignKey("communities.id"), nullable=True)
+    county = db.Column(db.Text, nullable=True)
+    location = db.Column(db.Text, nullable=False)
+    water_type = db.Column(db.Text, nullable=False)
+    status = db.Column(db.Text, nullable=False, default="Operational")
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    community = db.relationship("Community", back_populates="water_points")
+    reports = db.relationship(
+        "Report", back_populates="water_point", foreign_keys="Report.water_point_id"
+    )
+
+    def __repr__(self) -> str:
+        return f"<WaterPoint {self.name!r}>"
+
+
+class Report(db.Model):
+    __tablename__ = "reports"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    community_id = db.Column(db.Integer, db.ForeignKey("communities.id"), nullable=False)
+    water_point_id = db.Column(db.Integer, db.ForeignKey("water_points.id"), nullable=True)
+    title = db.Column(db.Text, nullable=False)
+    category = db.Column(db.Text, nullable=False, default="Other")
+    description = db.Column(db.Text, nullable=False)
+    county = db.Column(db.Text, nullable=True)
+    location = db.Column(db.Text, nullable=False)
+    status = db.Column(db.Text, nullable=False, default="Pending")
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    user = db.relationship("User", back_populates="reports", foreign_keys="Report.user_id")
+    community = db.relationship("Community", back_populates="reports", foreign_keys="Report.community_id")
+    water_point = db.relationship(
+        "WaterPoint", back_populates="reports", foreign_keys="Report.water_point_id"
+    )
+
+    def __repr__(self) -> str:
+        return f"<Report {self.id!r}: {self.title!r}>"
+
+
+class SupportMessage(db.Model):
+    """In-app messages residents send to the admin team."""
+
+    __tablename__ = "support_messages"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+
+    user = db.relationship("User", back_populates="support_messages", foreign_keys="SupportMessage.user_id")
+
+    def __repr__(self) -> str:
+        return f"<SupportMessage {self.id!r} by {self.user_id!r}>"
+
+========== ADMIN ROUTES ==========
+﻿from app import admin_dashboard, update_report_status
+
+__all__ = ["admin_dashboard", "update_report_status"]
+
+========== REPORT ROUTES ==========
+from app import create_report, resident_dashboard
+
+__all__ = ["resident_dashboard", "create_report"]
+
+========== RESIDENT ROUTES ==========
+from app import resident_dashboard
+
+__all__ = ["resident_dashboard"]
+
+========== ADMIN REPORT DETAILS ==========
+{% extends "base.html" %}
+
+{% block title %}Respond to Report | MajiCare{% endblock %}
+
+{% block content %}
+<section class="section admin-page">
+    <div class="section-heading">
+        <div>
+            <span class="dashboard-eyebrow">ADMIN RESPONSE</span>
+            <h1>Respond to Report</h1>
+            <p>Write a reply to the community member who submitted this report.</p>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <article class="stat-card">
+            <span class="stat-icon">▤</span>
+            <p class="stat-label">Report</p>
+            <h2>{{ report.title }}</h2>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon">◉</span>
+            <p class="stat-label">Status</p>
+            <h2>{{ report.status }}</h2>
+        </article>
+        <article class="stat-card">
+            <span class="stat-icon">📍</span>
+            <p class="stat-label">Location</p>
+            <h2>{{ report.county or 'Not specified' }} · {{ report.location }}</h2>
+        </article>
+    </div>
+
+    <div class="dashboard-panel">
+        <div class="panel-heading">
+            <div><span class="dashboard-eyebrow">REPORT DETAILS</span><h2>Report Description</h2></div>
+        </div>
+        <article class="report-detail-card">
+            <p>{{ report.description }}</p>
+            <div class="report-meta">
+                <span><small>Category: {{ report.category }}</small></span>
+                <span><small>Submitted: {{ report.created_at }}</small></span>
+                <span><small>Reported by: {{ report.username or 'Unknown' }}</small></span>
+            </div>
+        </article>
+    </div>
+
+    <div class="dashboard-panel">
+        <div class="panel-heading">
+            <div><span class="dashboard-eyebrow">ADMIN RESPONSE</span><h2>Write a response</h2></div>
+        </div>
+        <form method="post" action="{{ url_for('admin.respond_to_report', report_id=report.id) }}" class="response-form">
+            <div class="form-group">
+                <label for="message">Your response to the community member</label>
+                <textarea id="message" name="message" rows="6" required placeholder="e.g. We have scheduled a repair team for next week. We'll keep you updated."></textarea>
+            </div>
+            <button class="btn btn-primary" type="submit">Send Response</button>
+            <a class="btn btn-outline" href="{{ url_for('admin.admin_dashboard') }}">Cancel</a>
+        </form>
+    </div>
+
+    {% if replies %}
+    <div class="dashboard-panel">
+        <div class="panel-heading">
+            <div><span class="dashboard-eyebrow">RESPONSE HISTORY</span><h2>Previous responses</h2></div>
+        </div>
+        <div class="response-list">
+            {% for reply in replies %}
+            <article class="response-item">
+                <div class="response-header">
+                    <span class="response-avatar">{{ reply.username[0] | upper }}</span>
+                    <span class="response-author">{{ reply.username }} (admin)</span>
+                    <time>{{ reply.created_at }}</time>
+                </div>
+                <p class="response-body">{{ reply.message }}</p>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="dashboard-panel">
+        <div class="panel-heading">
+            <div><span class="dashboard-eyebrow">RESPONSE HISTORY</span><h2>Previous responses</h2></div>
+        </div>
+        <p class="no-replies">No responses have been sent yet.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function (alert) {
+        setTimeout(function () {
+            alert.style.opacity = '0';
+            setTimeout(function () { alert.remove(); }, 400);
+        }, 5000);
+    });
+});
+</script>
+{% endblock %}
+========== RESIDENT REPORT DETAILS ==========
+{% extends "base.html" %}
+
+{% block title %}Report Details | MajiCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-heading">
+        <div>
+            <span class="eyebrow">REPORT DETAILS</span>
+            <h2>{{ report.title }}</h2>
+            <p>Submitted by {{ report.username or 'Unknown user' }}</p>
+        </div>
+        <a class="btn btn-outline" href="{{ url_for('my_reports') }}">Back to My Reports</a>
+    </div>
+
+    <div class="form-card" style="width: min(760px, 100%);">
+        <p><strong>Status:</strong> <span class="status-badge status-{{ report.status|lower|replace(' ', '-') }}">{{ report.status }}</span></p>
+        <p><strong>Category:</strong> {{ report.category }}</p>
+        <p><strong>County:</strong> {{ report.county or 'Not specified' }}</p>
+        <p><strong>Area:</strong> {{ report.location }}</p>
+        <p><strong>Submitted:</strong> {{ report.created_at }}</p>
+        <div>
+            <h3>Description</h3>
+            <p>{{ report.description }}</p>
+        </div>
+    </div>
+
+    <div class="form-card" style="width: min(760px, 100%);">
+        <h3>Admin Response</h3>
+        {% if reply %}
+        <div class="response-item">
+            <div class="response-header">
+                <span class="response-avatar">{{ reply.username[0] | upper }}</span>
+                <span class="response-author">{{ reply.username }}</span>
+                <time>{{ reply.created_at }}</time>
+            </div>
+            <p class="response-body">{{ reply.message }}</p>
+        </div>
+        <p class="response-note">The admin has responded to this report. Thank you for your patience.</p>
+        {% else %}
+        <div class="response-item">
+            <div class="response-header">
+                <span class="response-avatar">&#9679;</span>
+                <span class="response-author">No response yet</span>
+            </div>
+            <p class="response-body">No admin has responded to this issue yet. We'll notify you as soon as a response is available.</p>
+        </div>
+        <p class="response-note">You will be notified when the admin responds to this report.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+========== MY REPORTS ==========
+{% extends "base.html" %}
+
+{% block title %}My Reports | MajiCare{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-heading">
+        <div>
+            <span class="eyebrow">MY REPORTS</span>
+            <h2>My Reports</h2>
+            <p>Track every water issue you have submitted.</p>
+        </div>
+        <a class="btn btn-outline" href="{{ url_for('create_report') }}">Report a Problem +</a>
+    </div>
+
+    <form method="get" action="{{ url_for('my_reports') }}" class="filter-form">
+        <label for="report-status-filter" class="sr-only">Filter by status</label>
+        <select id="report-status-filter" name="status" aria-label="Filter reports by status" onchange="this.form.submit()">
+            {% for status_option in allowed_statuses %}
+                <option value="{{ status_option }}" {% if status_option == selected_status %}selected{% endif %}>{{ status_option }}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    {% if reports %}
+        <div class="water-grid">
+            {% for report in reports %}
+                <article class="water-card">
+                    <span class="status-badge status-{{ report.status|lower|replace(' ', '-') }}">{{ report.status }}</span>
+                    <h3>{{ report.title }}</h3>
+                    <p><strong>Category:</strong> {{ report.category }}</p>
+                    <p><strong>County:</strong> {{ report.county or 'Not specified' }}</p>
+                    <p><strong>Area:</strong> {{ report.location }}</p>
+                    <p>{{ report.description }}</p>
+                    <p><small>Submitted {{ report.created_at }}</small></p>
+                    <a class="btn btn-outline" href="{{ url_for('report_details', report_id=report.id) }}">View Details</a>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="form-card">
+            <p>You have not submitted any reports yet for this filter.</p>
+            <a class="btn btn-primary" href="{{ url_for('create_report') }}">Create your first report</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

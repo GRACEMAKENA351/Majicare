@@ -73,41 +73,7 @@
             <p>Add a verified point so it appears in the correct county list.</p>
         </div>
     </div>
-    <form class="form-card water-point-form" method="post" action="{{ url_for('add_water_point') }}">
-        <label for="point-name">Water point name</label>
-        <input id="point-name" name="name" type="text" required maxlength="120">
-
-        <label for="point-county">County</label>
-        <select id="point-county" name="county" required>
-            <option value="">Select a county</option>
-            {% for county in counties %}
-                <option value="{{ county }}">{{ county }}</option>
-            {% endfor %}
-        </select>
-
-        <label for="point-location">Area or named location</label>
-        <input id="point-location" name="location" type="text" required maxlength="200" placeholder="Town, village, or specific location">
-
-        <label for="point-type">Water source type</label>
-        <input id="point-type" name="water_type" type="text" required maxlength="80" placeholder="Borehole, spring, community tap">
-
-        <label for="point-status">Status</label>
-        <select id="point-status" name="status" required>
-            <option value="Operational">Operational</option>
-            <option value="Needs Inspection">Needs Inspection</option>
-            <option value="Out of Service">Out of Service</option>
-        </select>
-
-        <div class="coordinate-fields">
-            <label for="point-latitude">Latitude <span>(optional)</span></label>
-            <label for="point-longitude">Longitude <span>(optional)</span></label>
-            <input id="point-latitude" name="latitude" type="number" step="any" min="-90" max="90" placeholder="-0.5">
-            <input id="point-longitude" name="longitude" type="number" step="any" min="-180" max="180" placeholder="37.9">
-            <p>Provide verified coordinates to display this water point on the map. Leave both blank if they are unknown.</p>
-        </div>
-
-        <button class="btn btn-primary" type="submit">Add water point</button>
-    </form>
+    <a class="btn btn-primary" href="{{ url_for('admin.water_points') }}">Manage Water Points</a>
 </section>
 {% endif %}
 {% endblock %}

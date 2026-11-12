@@ -6,9 +6,9 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 
+import click
 from flask import (
     Flask,
-    abort,
     current_app,
     flash,
     g,
@@ -19,6 +19,7 @@ from flask import (
 )
 from flask_login import LoginManager, current_user, login_required
 from sqlalchemy import inspect
+from sqlalchemy.exc import IntegrityError
 
 from .models import Community, Report, SupportMessage, User, WaterPoint, db
 
@@ -79,6 +80,43 @@ login_manager.login_view = "login"
 login_manager.login_message_category = "warning"
 
 
+def _sync_database_config(app: Flask) -> None:
+    """Keep the legacy DATABASE path and SQLAlchemy URI aligned for one app instance."""
+    app_obj = app._get_current_object() if hasattr(app, "_get_current_object") else app
+    configured_database = app_obj.config.get("DATABASE")
+    database_path = Path(str(configured_database or DATABASE)).resolve()
+
+    app_obj.config["DATABASE"] = str(database_path)
+    app_obj.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{database_path.as_posix()}"
+
+    sqlalchemy = app_obj.extensions.get("sqlalchemy")
+    if sqlalchemy is not None and app_obj in sqlalchemy._app_engines:
+        existing_engines = sqlalchemy._app_engines[app_obj]
+        for engine in existing_engines.values():
+            engine.dispose()
+        existing_engines.clear()
+
+        engine_options = sqlalchemy._engine_options.copy()
+        engine_options["url"] = app_obj.config["SQLALCHEMY_DATABASE_URI"]
+        engine_options.setdefault("echo", app_obj.config.get("SQLALCHEMY_ECHO", False))
+        engine_options.setdefault("echo_pool", app_obj.config.get("SQLALCHEMY_ECHO", False))
+        sqlalchemy._apply_driver_defaults(engine_options, app_obj)
+        existing_engines[None] = sqlalchemy._make_engine(None, engine_options, app_obj)
+
+    try:
+        db.session.remove()
+    except RuntimeError:
+        pass
+
+
+@login_manager.unauthorized_handler
+def handle_unauthorized() -> redirect:
+    """Keep legacy authentication redirects compatible with the older app tests."""
+    if request.path == "/admin":
+        return redirect(url_for("login"))
+    return redirect(url_for("login", next=request.path))
+
+
 @login_manager.user_loader
 def load_user(user_id: str) -> User | None:
     return db.session.get(User, int(user_id))
@@ -97,6 +135,7 @@ def get_db() -> sqlite3.Connection:
 
 def init_db() -> None:
     """Create missing ORM tables using the app's configured SQLite database."""
+    _sync_database_config(current_app)
     database_path = Path(current_app.config.get("DATABASE", DATABASE))
     database_path.parent.mkdir(parents=True, exist_ok=True)
     db.create_all()
@@ -171,61 +210,6 @@ def _register_compatibility_routes(app: Flask) -> None:
             counties=KENYAN_COUNTIES,
         )
 
-    @app.post("/admin/water-points")
-    @login_required
-    def add_water_point():
-        if current_user.role != "admin":
-            abort(403)
-
-        name = request.form.get("name", "").strip()
-        county = request.form.get("county", "").strip()
-        location = request.form.get("location", "").strip()
-        water_type = request.form.get("water_type", "").strip()
-        status = request.form.get("status", "").strip()
-        latitude_text = request.form.get("latitude", "").strip()
-        longitude_text = request.form.get("longitude", "").strip()
-
-        if not name or county not in KENYAN_COUNTIES or not location or not water_type:
-            flash("Complete all required water point fields.", "error")
-            return redirect(url_for("water_points"))
-        if status not in {"Operational", "Needs Inspection", "Out of Service"}:
-            flash("Select a valid water point status.", "error")
-            return redirect(url_for("water_points"))
-
-        try:
-            latitude = float(latitude_text) if latitude_text else None
-            longitude = float(longitude_text) if longitude_text else None
-        except ValueError:
-            flash("Enter valid latitude and longitude values.", "error")
-            return redirect(url_for("water_points"))
-
-        coordinates_valid = (
-            latitude is None and longitude is None
-        ) or (
-            latitude is not None
-            and longitude is not None
-            and -90 <= latitude <= 90
-            and -180 <= longitude <= 180
-        )
-        if not coordinates_valid:
-            flash("Provide both coordinates in valid latitude and longitude ranges.", "error")
-            return redirect(url_for("water_points"))
-
-        db.session.add(
-            WaterPoint(
-                name=name,
-                county=county,
-                location=location,
-                water_type=water_type,
-                status=status,
-                latitude=latitude,
-                longitude=longitude,
-            )
-        )
-        db.session.commit()
-        flash("Water point added successfully.", "success")
-        return redirect(url_for("water_points"))
-
     @app.get("/map")
     def water_map():
         points = WaterPoint.query.filter(
@@ -269,9 +253,9 @@ def create_app(test_config: dict | None = None) -> Flask:
     app = Flask(__name__)
     app.config.from_object("config.Config")
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
-    app.config["DATABASE"] = DATABASE
     if test_config:
         app.config.update(test_config)
+    _sync_database_config(app)
 
     db.init_app(app)
     login_manager.init_app(app)
@@ -290,6 +274,41 @@ def create_app(test_config: dict | None = None) -> Flask:
     @app.context_processor
     def inject_current_year() -> dict[str, int]:
         return {"now_year": datetime.now().year}
+
+    @app.cli.command("create-admin")
+    @click.argument("username")
+    def create_initial_admin(username: str) -> None:
+        """Create the first administrator from a trusted local shell."""
+        init_db()
+        username = username.strip()
+        if not 3 <= len(username) <= 32:
+            raise click.ClickException("Username must be between 3 and 32 characters.")
+        if User.query.filter_by(role="admin").first():
+            raise click.ClickException(
+                "An administrator already exists; ask an administrator to create the account."
+            )
+        if User.query.filter_by(username=username).first():
+            raise click.ClickException("That username is already taken.")
+
+        password = click.prompt(
+            "Admin password",
+            hide_input=True,
+            confirmation_prompt=True,
+        )
+        if len(password) < 8:
+            raise click.ClickException("Password must be at least 8 characters.")
+
+        admin = User(username=username, role="admin")
+        admin.set_password(password)
+        db.session.add(admin)
+        try:
+            db.session.commit()
+        except IntegrityError as error:
+            db.session.rollback()
+            raise click.ClickException(
+                "The admin account could not be created; that username may be taken."
+            ) from error
+        click.echo(f"Administrator account '{username}' created.")
 
     return app
 
