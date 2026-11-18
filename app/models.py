@@ -18,7 +18,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.Text, nullable=True)
     password_hash = db.Column(db.Text, nullable=False)
     role = db.Column(db.Text, nullable=False, default="resident")
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     reports = db.relationship("Report", back_populates="user", foreign_keys="Report.user_id")
     support_messages = db.relationship(
@@ -47,7 +47,7 @@ class Community(db.Model):
     region = db.Column(db.Text, nullable=False)
     population = db.Column(db.Integer, nullable=True)
     description = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     water_points = db.relationship(
         "WaterPoint", back_populates="community", foreign_keys="WaterPoint.community_id"
@@ -70,7 +70,7 @@ class WaterPoint(db.Model):
     status = db.Column(db.Text, nullable=False, default="Operational")
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     community = db.relationship("Community", back_populates="water_points")
     reports = db.relationship(
@@ -94,7 +94,7 @@ class Report(db.Model):
     county = db.Column(db.Text, nullable=True)
     location = db.Column(db.Text, nullable=False)
     status = db.Column(db.Text, nullable=False, default="Pending")
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship("User", back_populates="reports", foreign_keys="Report.user_id")
     community = db.relationship("Community", back_populates="reports", foreign_keys="Report.community_id")
@@ -120,7 +120,7 @@ class SupportMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     message = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship("User", back_populates="support_messages", foreign_keys="SupportMessage.user_id")
 
